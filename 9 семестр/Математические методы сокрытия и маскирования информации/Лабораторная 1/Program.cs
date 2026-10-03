@@ -119,7 +119,7 @@ namespace DocxInspector
             }
         }
 
-        // --- Вспомогательные методы (строковые, для отчёта) ---
+        // --- Вспомогательные методы ---
 
         private static string GetRunColor(RunProperties props, Run run)
         {
@@ -133,7 +133,6 @@ namespace DocxInspector
             if (shading?.Fill != null && !string.IsNullOrEmpty(shading.Fill.Value))
             {
                 string fill = shading.Fill.Value;
-                // "auto" / "FFFFFF" / белый = фактически прозрачный
                 if (!fill.Equals("auto", StringComparison.OrdinalIgnoreCase) &&
                     !fill.Equals("FFFFFF", StringComparison.OrdinalIgnoreCase))
                 {
@@ -145,7 +144,6 @@ namespace DocxInspector
             if (highlight?.Val != null)
             {
                 var val = highlight.Val.Value;
-                // white / none = визуально прозрачный
                 if (val != HighlightColorValues.White && val != HighlightColorValues.None)
                     return $"Маркер: {val}";
             }
@@ -154,7 +152,7 @@ namespace DocxInspector
         }
 
 
-        // --- Числовые методы (для сравнения) ---
+        // --- Числовые методы---
 
         private static int GetRunScaleValue(RunProperties props, Run run)
         {
