@@ -189,35 +189,28 @@ namespace Лабораторная_1
 
         private static void SplitRunsByCharacters(Body body)
         {
-            // Сначала собираем все Run в список (чтобы не менять коллекцию во время обхода)
             var allRuns = body.Descendants<Run>().ToList();
 
             foreach (var run in allRuns)
             {
                 string text = run.InnerText;
                 if (string.IsNullOrEmpty(text) || text.Length == 1)
-                    continue; // уже один символ — ничего не делаем
+                    continue;
 
-                // Родитель — обычно Paragraph
                 var parent = run.Parent;
                 if (parent == null) continue;
 
-                // Копируем RunProperties исходного run'а для каждого нового
-                // (каждый раз новый экземпляр, иначе ApplyBitToRun испортит общий)
                 var originalProps = run.RunProperties;
 
-                // Опорный узел: вставляем новые Run перед исходным
                 var insertBefore = run;
 
                 for (int i = 0; i < text.Length; i++)
                 {
                     var newRun = new Run();
 
-                    // Копия свойств
                     if (originalProps != null)
                         newRun.RunProperties = (RunProperties)originalProps.CloneNode(true);
 
-                    // Один символ
                     newRun.AppendChild(new Text(text[i].ToString())
                     {
                         Space = SpaceProcessingModeValues.Preserve
@@ -226,7 +219,6 @@ namespace Лабораторная_1
                     parent.InsertBefore(newRun, insertBefore);
                 }
 
-                // Удаляем исходный многосимвольный Run
                 run.Remove();
             }
         }
