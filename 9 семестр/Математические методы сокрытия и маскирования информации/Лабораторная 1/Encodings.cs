@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace DocxInspector
+namespace Лабораторная_1
 {
     public static class Encodings
     {
@@ -45,23 +45,23 @@ namespace DocxInspector
             { 0b10101, '6' }, { 0b10001, '+' },
         };
 
-        private enum Mtk2Register
+        public enum Mtk2Register
         {
             Latin,
             Russian,
             Digits
         }
 
-        private const int Mtk2CodeLatin = 0b11111;
-        private const int Mtk2CodeDigits = 0b11011;
-        private const int Mtk2CodeRussian = 0b00000;
-        private const int Mtk2CodeCR = 0b01000;
-        private const int Mtk2CodeLF = 0b00010;
-        private const int Mtk2CodeSpace = 0b00100;
+        public const int Mtk2CodeLatin = 0b11111;
+        public const int Mtk2CodeDigits = 0b11011;
+        public const int Mtk2CodeRussian = 0b00000;
+        public const int Mtk2CodeCR = 0b01000;
+        public const int Mtk2CodeLF = 0b00010;
+        public const int Mtk2CodeSpace = 0b00100;
 
-        private static readonly char[] Koi8rTable = BuildKoi8r();
+        public static readonly char[] Koi8rTable = BuildKoi8r();
 
-        private static char[] BuildKoi8r()
+        public static char[] BuildKoi8r()
         {
             var t = new char[256];
             for (int i = 0; i < 128; i++) t[i] = (char)i;
@@ -73,9 +73,9 @@ namespace DocxInspector
             return t;
         }
 
-        private static readonly char[] Cp866Table = BuildCp866();
+        public static readonly char[] Cp866Table = BuildCp866();
 
-        private static char[] BuildCp866()
+        public static char[] BuildCp866()
         {
             var t = new char[256];
 
@@ -118,9 +118,9 @@ namespace DocxInspector
             return t;
         }
 
-        private static readonly char[] Win1251Table = BuildWin1251();
+        public static readonly char[] Win1251Table = BuildWin1251();
 
-        private static char[] BuildWin1251()
+        public static char[] BuildWin1251()
         {
             var t = new char[256];
             for (int i = 0; i < 128; i++) t[i] = (char)i;
