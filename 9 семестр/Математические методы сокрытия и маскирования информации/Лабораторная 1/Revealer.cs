@@ -11,7 +11,6 @@ namespace Лабораторная_1
 {
     public static class Revealer
     {
-        // Эталонные значения (должны совпадать с Hider)
         private const string RefColor = "000000";
         private const string RefBackground = "Прозрачный";
         private const double RefFontSize = 12.0;
@@ -127,7 +126,6 @@ namespace Лабораторная_1
             return s;
         }
 
-        // --- Вспомогательные методы (без изменений) ---
 
         private static string GetRunColor(RunProperties props, Run run)
         {

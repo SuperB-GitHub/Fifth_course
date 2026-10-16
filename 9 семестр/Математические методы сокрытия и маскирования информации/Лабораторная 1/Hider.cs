@@ -102,6 +102,8 @@ namespace Лабораторная_1
                     mainPart.Document.Save();
                 }
 
+                Console.WriteLine($"\nСкрытые биты:\n{bits}\n");
+
                 Console.WriteLine($"Готово. Результат сохранён: {outputPath}");
                 Console.WriteLine($"Скрыто битов: {bits.Length}");
             }
@@ -228,11 +230,11 @@ namespace Лабораторная_1
         {
             return encChoice switch
             {
-                "1" => EncodeMtk2(message),
+                "1" => EncodeMtk2(message.ToUpper()),
                 "2" => EncodeKoi8r(message),
                 "3" => EncodeCp866(message),
                 "4" => EncodeWin1251(message),
-                _ => EncodeMtk2(message)
+                _ => EncodeMtk2(message.ToUpper())
             };
         }
 
@@ -308,7 +310,6 @@ namespace Лабораторная_1
 
         private static bool TryGetMtk2Code(char c, out int code, out int register)
         {
-            // 1. Русский регистр (Mtk2Russian)
             foreach (var kv in Encodings.Mtk2Russian)
             {
                 if (kv.Value == c)
@@ -319,7 +320,6 @@ namespace Лабораторная_1
                 }
             }
 
-            // 2. Латинский регистр (Mtk2Latin)
             foreach (var kv in Encodings.Mtk2Latin)
             {
                 if (kv.Value == c)
@@ -330,7 +330,6 @@ namespace Лабораторная_1
                 }
             }
 
-            // 3. Цифры/знаки (Mtk2Digits)
             foreach (var kv in Encodings.Mtk2Digits)
             {
                 if (kv.Value == c)
