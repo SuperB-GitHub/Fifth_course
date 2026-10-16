@@ -30,7 +30,7 @@ def uci(uch, uh):
     """Расчет уровня информативного сигнала: Uci = sqrt(Uc^2 - Uш^2)"""
     val = (uch**2) - (uh**2)
     if val < 0:
-        return 0.0 # Защита от извлечения корня из отрицательного числа
+        return 0.0 
     return round(math.sqrt(val), 4)
 
 def ki(li, lni):
