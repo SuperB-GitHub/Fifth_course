@@ -7,11 +7,6 @@ namespace Лабораторная_1
 {
     public static class Hider
     {
-        private const string RefColor = "000000";
-        private const double RefFontSize = 12.0;
-        private const int RefScale = 100;
-        private const int RefSpacing = 0;
-
         private const string DeviantColor = "FF0000";
         private const string DeviantShading = "DDDDDD";
         private const int DeviantFontSizeHalfPoints = 28;
@@ -92,11 +87,13 @@ namespace Лабораторная_1
                         return;
                     }
 
+                    var refStyle = RunStyleHelper.BuildRefStyle(runs[^1]);
+
                     for (int i = 0; i < bits.Length; i++)
                     {
                         var run = runs[i];
                         EnsureRunProperties(run);
-                        ApplyBitToRun(run, bits[i], hideChoice);
+                        ApplyBitToRun(run, bits[i], hideChoice, refStyle);
                     }
 
                     mainPart.Document.Save();
@@ -128,10 +125,9 @@ namespace Лабораторная_1
                 run.RunProperties = new RunProperties();
         }
 
-        private static void ApplyBitToRun(Run run, char bit, string hideChoice)
+        private static void ApplyBitToRun(Run run, char bit, string hideChoice, RunStyleHelper.RefStyle refStyle)
         {
             var props = run.RunProperties!;
-
             bool deviate = bit == '1';
 
             switch (hideChoice)
@@ -140,7 +136,7 @@ namespace Лабораторная_1
                     props.RemoveAllChildren<Color>();
                     props.Append(new Color
                     {
-                        Val = deviate ? DeviantColor : RefColor
+                        Val = deviate ? DeviantColor : refStyle.Color
                     });
                     break;
 
@@ -148,7 +144,7 @@ namespace Лабораторная_1
                     props.RemoveAllChildren<Shading>();
                     props.Append(new Shading
                     {
-                        Fill = deviate ? DeviantShading : "FFFFFF"
+                        Fill = deviate ? DeviantShading : refStyle.BackgroundFill
                     });
                     break;
 
@@ -158,7 +154,7 @@ namespace Лабораторная_1
                     {
                         Val = deviate
                             ? DeviantFontSizeHalfPoints.ToString()
-                            : "24"
+                            : ((int)Math.Round(refStyle.FontSize * 2)).ToString()
                     });
                     break;
 
@@ -166,7 +162,7 @@ namespace Лабораторная_1
                     props.RemoveAllChildren<CharacterScale>();
                     props.Append(new CharacterScale
                     {
-                        Val = deviate ? DeviantScale : RefScale
+                        Val = deviate ? DeviantScale : refStyle.Scale
                     });
                     break;
 
@@ -174,16 +170,15 @@ namespace Лабораторная_1
                     props.RemoveAllChildren<Spacing>();
                     props.Append(new Spacing
                     {
-                        Val = deviate ? DeviantSpacing : RefSpacing
+                        Val = deviate ? DeviantSpacing : refStyle.Spacing
                     });
                     break;
 
                 default:
-                    // По умолчанию — цвет
                     props.RemoveAllChildren<Color>();
                     props.Append(new Color
                     {
-                        Val = deviate ? DeviantColor : RefColor
+                        Val = deviate ? DeviantColor : refStyle.Color
                     });
                     break;
             }
@@ -224,7 +219,6 @@ namespace Лабораторная_1
                 run.Remove();
             }
         }
-
 
         private static string EncodeToBits(string message, string encChoice)
         {

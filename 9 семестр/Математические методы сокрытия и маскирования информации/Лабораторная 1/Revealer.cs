@@ -1,22 +1,11 @@
-using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text;
 
 namespace Лабораторная_1
 {
     public static class Revealer
     {
-        private const string RefColor = "000000";
-        private const string RefBackground = "Прозрачный";
-        private const double RefFontSize = 12.0;
-        private const int RefScale = 100;
-        private const int RefSpacing = 0;
-
         public static void Run()
         {
             Console.WriteLine("Укажите путь к файлу .docx:");
@@ -40,47 +29,57 @@ namespace Лабораторная_1
                         return;
                     }
 
+                    var runs = mainPart.Document.Body
+                        .Descendants<Paragraph>()
+                        .SelectMany(p => p.Descendants<Run>())
+                        .Where(r => !string.IsNullOrEmpty(r.InnerText))
+                        .ToList();
+
+                    if (runs.Count == 0)
+                    {
+                        Console.WriteLine("В документе нет текста.");
+                        return;
+                    }
+
+                    // Эталон берём с последнего символа документа
+                    var refStyle = RunStyleHelper.BuildRefStyle(runs[^1]);
+
                     var flagsBuilder = new StringBuilder();
                     var allReasons = new HashSet<string>();
 
-                    foreach (var paragraph in mainPart.Document.Body.Descendants<Paragraph>())
+                    foreach (var run in runs)
                     {
-                        foreach (var run in paragraph.Descendants<Run>())
-                        {
-                            string text = run.InnerText;
-                            if (string.IsNullOrEmpty(text)) continue;
+                        string text = run.InnerText;
+                        RunProperties props = run.RunProperties!;
 
-                            RunProperties props = run.RunProperties!;
+                        string colorStr = RunStyleHelper.GetRunColor(props, run);
+                        string bgStr = RunStyleHelper.GetRunBackground(props);
+                        double fontSize = RunStyleHelper.GetEffectiveFontSize(run);
+                        int scale = RunStyleHelper.GetRunScaleValue(props, run);
+                        int spacing = RunStyleHelper.GetRunSpacingValue(props, run);
 
-                            string colorStr = GetRunColor(props, run);
-                            string bgStr = GetRunBackground(props);
-                            double fontSize = GetEffectiveFontSize(run);
-                            int scale = GetRunScaleValue(props, run);
-                            int spacing = GetRunSpacingValue(props, run);
+                        var localReasons = new List<string>();
 
-                            var localReasons = new List<string>();
+                        if (!string.Equals(colorStr, refStyle.Color, StringComparison.OrdinalIgnoreCase))
+                            localReasons.Add($"цвет = {colorStr}");
 
-                            if (!string.Equals(colorStr, RefColor, StringComparison.OrdinalIgnoreCase))
-                                localReasons.Add($"цвет = {colorStr}");
+                        if (!string.Equals(bgStr, refStyle.Background, StringComparison.OrdinalIgnoreCase))
+                            localReasons.Add($"фон = {bgStr}");
 
-                            if (!string.Equals(bgStr, RefBackground, StringComparison.OrdinalIgnoreCase))
-                                localReasons.Add($"фон = {bgStr}");
+                        if (Math.Abs(fontSize - refStyle.FontSize) > 0.001)
+                            localReasons.Add($"размер = {fontSize} pt");
 
-                            if (Math.Abs(fontSize - RefFontSize) > 0.001)
-                                localReasons.Add($"размер = {fontSize} pt");
+                        if (scale != refStyle.Scale)
+                            localReasons.Add($"масштаб = {scale}%");
 
-                            if (scale != RefScale)
-                                localReasons.Add($"масштаб = {scale}%");
+                        if (spacing != refStyle.Spacing)
+                            localReasons.Add($"интервал = {spacing} twips");
 
-                            if (spacing != RefSpacing)
-                                localReasons.Add($"интервал = {spacing} twips");
+                        char flag = localReasons.Count > 0 ? '1' : '0';
+                        flagsBuilder.Append(flag, text.Length);
 
-                            char flag = localReasons.Count > 0 ? '1' : '0';
-                            flagsBuilder.Append(flag, text.Length);
-
-                            foreach (var r in localReasons)
-                                allReasons.Add(r);
-                        }
+                        foreach (var r in localReasons)
+                            allReasons.Add(r);
                     }
 
                     Console.WriteLine($"=== Битовая скрытая строка === (всего битов: {flagsBuilder.Length})");
@@ -124,90 +123,6 @@ namespace Лабораторная_1
             if (s.Length >= 2 && s[0] == '"' && s[^1] == '"')
                 s = s[1..^1];
             return s;
-        }
-
-
-        private static string GetRunColor(RunProperties props, Run run)
-        {
-            var colorElement = props?.Color ?? GetStyleProperty<Color>(run);
-            return colorElement?.Val?.Value ?? "Авто (черный по умолчанию)";
-        }
-
-        private static string GetRunBackground(RunProperties props)
-        {
-            var shading = props?.Shading;
-            if (shading?.Fill != null && !string.IsNullOrEmpty(shading.Fill.Value))
-            {
-                string fill = shading.Fill.Value;
-                if (!fill.Equals("auto", StringComparison.OrdinalIgnoreCase) &&
-                    !fill.Equals("FFFFFF", StringComparison.OrdinalIgnoreCase))
-                {
-                    return $"Заливка: #{fill}";
-                }
-            }
-
-            var highlight = props?.Highlight;
-            if (highlight?.Val != null)
-            {
-                var val = highlight.Val.Value;
-                if (val != HighlightColorValues.White && val != HighlightColorValues.None)
-                    return $"Маркер: {val}";
-            }
-
-            return "Прозрачный";
-        }
-
-        private static int GetRunScaleValue(RunProperties props, Run run)
-        {
-            var el = props?.CharacterScale ?? GetStyleProperty<CharacterScale>(run);
-            return (int)(el?.Val?.Value ?? 100);
-        }
-
-        private static int GetRunSpacingValue(RunProperties props, Run run)
-        {
-            var el = props?.Spacing ?? GetStyleProperty<Spacing>(run);
-            return el?.Val?.Value ?? 0;
-        }
-
-        private static double GetEffectiveFontSize(Run run)
-        {
-            double direct = 12.0;
-            var directEl = run.RunProperties?.FontSize;
-            if (directEl?.Val?.Value != null &&
-                double.TryParse(directEl.Val.Value, out double h1))
-            {
-                direct = h1 / 2.0;
-            }
-
-            double fromStyle = double.MaxValue;
-            var styleEl = GetStyleProperty<FontSize>(run);
-            if (styleEl?.Val?.Value != null &&
-                double.TryParse(styleEl.Val.Value, out double h2))
-            {
-                fromStyle = h2 / 2.0;
-            }
-
-            return Math.Min(direct, fromStyle);
-        }
-
-        private static T GetStyleProperty<T>(Run run) where T : OpenXmlElement
-        {
-            var styleId = run.RunProperties?.RunStyle?.Val?.Value;
-            if (string.IsNullOrEmpty(styleId)) return null!;
-
-            var mainPart = run.Ancestors<Document>().FirstOrDefault()?.MainDocumentPart;
-            var stylePart = mainPart?.StyleDefinitionsPart;
-            if (stylePart?.Styles == null) return null!;
-
-            var style = stylePart.Styles.Elements<Style>()
-                .FirstOrDefault(s => s.StyleId == styleId);
-
-            if (style == null) return null!;
-
-            var styleProps = style.StyleRunProperties;
-            if (styleProps == null) return null!;
-
-            return styleProps.Elements<T>().FirstOrDefault()!;
         }
     }
 }
